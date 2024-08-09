@@ -11,6 +11,12 @@ if (NOT UNIX)
     message(SEND_ERROR "unsupported platform")
 endif ()
 
+IF(NOT JAVA_HOME)
+  message(SEND_ERROR "JAVA_HOME is not found")
+ENDIF(NOT JAVA_HOME)
+
+message("JAVA_HOME=${JAVA_HOME}")
+
 # ---------------------------------------------------------------------------
 # Library
 # ---------------------------------------------------------------------------
@@ -22,6 +28,7 @@ IF(SANI)
   target_link_libraries(leanstore asan)
 ENDIF(SANI)
 
+target_link_directories(leanstore PRIVATE ${JAVA_HOME}/lib ${JAVA_HOME}/lib/server)
 target_link_libraries(leanstore gflags Threads::Threads aio tbb atomic tabluate rapidjson ${Boost_LIBRARIES}) #tbb
 
 # ---------------------------------------------------------------------------
@@ -51,7 +58,7 @@ ELSEIF(CHECKS_LEVEL STREQUAL "benchmark")
 ENDIF()
 # ---------------------------------------------------------------------------
 target_include_directories(leanstore PUBLIC ${SHARED_INCLUDE_DIRECTORY})
-target_include_directories(leanstore PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(leanstore PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${JAVA_HOME}/include ${JAVA_HOME}/include/linux)
 # ---------------------------------------------------------------------------
 set(LEANSTORE_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR})
 set_property(TARGET leanstore APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${LEANSTORE_INCLUDE_DIR})
