@@ -14,21 +14,6 @@ endif ()
 # ---------------------------------------------------------------------------
 # Library
 # ---------------------------------------------------------------------------
-include(FetchContent)
-FetchContent_Declare(
-    jni_bind
-    GIT_REPOSITORY https://github.com/google/jni-bind.git
-    GIT_TAG Release-1.1.0-beta
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-)
-FetchContent_MakeAvailable(jni_bind)
-
-find_package(JNI)
-if(NOT JNI_FOUND)
-    message(SEND_ERROR "Could not find JNI")
-endif(NOT JNI_FOUND)
-
 add_library(leanstore STATIC ${LEANSTORE_CC})
 
 OPTION(SANI "Compile leanstore with sanitizers" OFF)
@@ -37,7 +22,7 @@ IF(SANI)
   target_link_libraries(leanstore asan)
 ENDIF(SANI)
 
-target_link_libraries(leanstore gflags Threads::Threads aio tbb atomic tabluate rapidjson ${Boost_LIBRARIES} ${JNI_LIBRARIES}) #tbb
+target_link_libraries(leanstore gflags Threads::Threads aio tbb atomic tabluate rapidjson jnibind ${Boost_LIBRARIES} ${JNI_LIBRARIES}) #tbb
 
 # ---------------------------------------------------------------------------
 OPTION(PARANOID "Enable sanity checks in release mode" OFF)
@@ -66,7 +51,7 @@ ELSEIF(CHECKS_LEVEL STREQUAL "benchmark")
 ENDIF()
 # ---------------------------------------------------------------------------
 target_include_directories(leanstore PUBLIC ${SHARED_INCLUDE_DIRECTORY})
-target_include_directories(leanstore PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${JNI_INCLUDE_DIRS} ${jni_bind_SOURCE_DIR})
+target_include_directories(leanstore PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${JNI_INCLUDE_DIRS})
 # ---------------------------------------------------------------------------
 set(LEANSTORE_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR})
 set_property(TARGET leanstore APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${LEANSTORE_INCLUDE_DIR})
