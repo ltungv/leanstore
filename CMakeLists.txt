@@ -2,8 +2,8 @@
 # Leanstore DB
 # ---------------------------------------------------------------------------
 
-project(leanstoredb)
 cmake_minimum_required(VERSION 3.7)
+project(leanstoredb)
 
 # ---------------------------------------------------------------------------
 # Environment
@@ -51,7 +51,6 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 include("${CMAKE_SOURCE_DIR}/libs/gflags.cmake")
 include("${CMAKE_SOURCE_DIR}/libs/tabluate.cmake")
 include("${CMAKE_SOURCE_DIR}/libs/rapidjson.cmake")
-include("${CMAKE_SOURCE_DIR}/libs/jnibind.cmake")
 #include("${CMAKE_SOURCE_DIR}/libs/boost.cmake")
 #include("${CMAKE_SOURCE_DIR}/libs/rocksdb.cmake")
 #include("${CMAKE_SOURCE_DIR}/libs/googletest.cmake")
