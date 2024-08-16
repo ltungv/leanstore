@@ -85,7 +85,6 @@ DEFINE_int64(wal_variant, 0, "");
 DEFINE_uint64(wal_log_writers, 1, "");
 DEFINE_uint64(wal_buffer_size, 1024 * 1024 * 10, "");
 // -------------------------------------------------------------------------------------
-DEFINE_bool(bookkeeper, false, "Use BookKeeper for the WAL");
 DEFINE_string(bookkeeper_jar_directories,
               "bookkeeper-wal/target:bookkeeper-wal/target/maven-dependencies",
               "List of directories containing all neccessary classpaths separated by ':'");
