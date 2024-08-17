@@ -1,5 +1,6 @@
 #include "LeanStore.hpp"
 
+#include "Exceptions.hpp"
 #include "leanstore/profiling/counters/CPUCounters.hpp"
 #include "leanstore/profiling/counters/PPCounters.hpp"
 #include "leanstore/profiling/counters/WorkerCounters.hpp"
@@ -9,6 +10,7 @@
 #include "leanstore/profiling/tables/DTTable.hpp"
 #include "leanstore/profiling/tables/LatencyTable.hpp"
 #include "leanstore/utils/FVector.hpp"
+#include "leanstore/utils/JNI.hpp"
 #include "leanstore/utils/ThreadLocalAggregator.hpp"
 // -------------------------------------------------------------------------------------
 #include "gflags/gflags.h"
@@ -53,6 +55,21 @@ LeanStore::LeanStore()
    }
    if (FLAGS_isolation_level == "si" && (!FLAGS_mv | !FLAGS_vi)) {
       SetupFailed("You have to enable mv an vi (multi-versioning)");
+   }
+   // -------------------------------------------------------------------------------------
+   if (FLAGS_wal_variant == 3) {
+      if (FLAGS_bookkeeper_jar_directories.empty()) {
+         SetupFailed("You have to provide paths to jars");
+      }
+      if (FLAGS_bookkeeper_ensemble <= 0) {
+         SetupFailed("You have to provide an ensemble size greater than zero");
+      }
+      if (FLAGS_bookkeeper_ensemble < FLAGS_bookkeeper_quorum) {
+         SetupFailed("You have to provide a quorum size greater than the ensemble size");
+      }
+      std::string classpath = "-Djava.class.path=";
+      classpath.append(collectJarPaths());
+      jni::init(classpath);
    }
    // -------------------------------------------------------------------------------------
    // Set the default logger to file logger
@@ -451,6 +468,9 @@ LeanStore::~LeanStore()
    if (FLAGS_persist) {
       serializeState();
       buffer_manager->writeAllBufferFrames();
+   }
+   if (FLAGS_wal_variant == 3) {
+      jni::deinit();
    }
 }
 // -------------------------------------------------------------------------------------
