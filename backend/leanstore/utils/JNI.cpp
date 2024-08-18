@@ -130,7 +130,7 @@ static void check_java_exception(JNIEnv* env)
    jthrowable throwable_ptr = env->ExceptionOccurred();
    if (throwable_ptr != nullptr) {
       env->ExceptionClear();
-      java::lang::Throwable throwable(throwable_ptr);
+      java::lang::LocalThrowable throwable(throwable_ptr);
       std::runtime_error error(throwable.getMessage());
       throw error;
    }
@@ -281,25 +281,7 @@ void jni::detachThread()
    JVM_REF->attachThread();
 }
 
-jni::JObjectRef::JObjectRef(jobject object) : object(JVM_REF->getEnv()->NewGlobalRef(object)) {}
-jni::JObjectRef::JObjectRef(const JObjectRef& ref) : jni::JObjectRef(JVM_REF->getEnv()->NewGlobalRef(ref.object)) {}
-jni::JObjectRef::JObjectRef(JObjectRef&& ref) : JObjectRef(std::move(ref.object)) {};
-jni::JObjectRef::~JObjectRef()
-{
-   JVM_REF->getEnv()->DeleteGlobalRef(object);
-};
-
-jni::JObjectRef& jni::JObjectRef::operator=(const jni::JObjectRef& ref)
-{
-   object = JVM_REF->getEnv()->NewGlobalRef(ref.object);
-   return *this;
-}
-
-jni::JObjectRef& jni::JObjectRef::operator=(JObjectRef&& ref)
-{
-   object = std::move(ref.object);
-   return *this;
-}
+jni::JObjectRef::JObjectRef(jobject object) : object(object) {}
 
 template <typename... Args>
 jobject jni::JObjectRef::callNonVirtualObjectMethod(jclass clazz, jmethodID methodID, Args... args)
@@ -308,9 +290,43 @@ jobject jni::JObjectRef::callNonVirtualObjectMethod(jclass clazz, jmethodID meth
    return env->CallNonvirtualObjectMethod(object, clazz, methodID, args...);
 }
 
-java::lang::Throwable::Throwable(jthrowable throwable) : ref(jni::JObjectRef(throwable)) {}
+jni::LocalRef::LocalRef(jobject object) : JObjectRef(object) {}
+jni::LocalRef::LocalRef(LocalRef&& ref) : JObjectRef(std::move(ref.object)) {};
+jni::LocalRef::~LocalRef()
+{
+   JVM_REF->getEnv()->DeleteLocalRef(object);
+};
 
-std::string java::lang::Throwable::getMessage()
+jni::LocalRef& jni::LocalRef::operator=(LocalRef&& ref)
+{
+   object = std::move(ref.object);
+   return *this;
+}
+
+jni::GlobalRef::GlobalRef(jni::LocalRef ref) : JObjectRef(JVM_REF->getEnv()->NewGlobalRef(ref.object)) {}
+jni::GlobalRef::GlobalRef(jni::LocalRef& ref) : JObjectRef(JVM_REF->getEnv()->NewGlobalRef(ref.object)) {}
+jni::GlobalRef::GlobalRef(const GlobalRef& ref) : jni::JObjectRef(JVM_REF->getEnv()->NewGlobalRef(ref.object)) {}
+jni::GlobalRef::GlobalRef(GlobalRef&& ref) : JObjectRef(std::move(ref.object)) {};
+jni::GlobalRef::~GlobalRef()
+{
+   JVM_REF->getEnv()->DeleteGlobalRef(object);
+};
+
+jni::GlobalRef& jni::GlobalRef::operator=(const jni::GlobalRef& ref)
+{
+   object = JVM_REF->getEnv()->NewGlobalRef(ref.object);
+   return *this;
+}
+
+jni::GlobalRef& jni::GlobalRef::operator=(GlobalRef&& ref)
+{
+   object = std::move(ref.object);
+   return *this;
+}
+
+java::lang::LocalThrowable::LocalThrowable(jthrowable throwable) : ref(jni::LocalRef(throwable)) {}
+
+std::string java::lang::LocalThrowable::getMessage()
 {
    JNIEnv* env = jni::JVM_REF->getEnv();
    jstring message = reinterpret_cast<jstring>(ref.callNonVirtualObjectMethod(java::lang::jc_Throwable, java::lang::jm_Throwable_getMessage));
@@ -321,12 +337,12 @@ std::string java::lang::Throwable::getMessage()
    return message_str;
 }
 
-bookkeeper::ClientConfiguration::ClientConfiguration()
-    : ref(jni::JObjectRef(jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_ClientConfiguration, bookkeeper::jm_ClientConfiguration_init)))
+bookkeeper::LocalClientConfiguration::LocalClientConfiguration()
+    : ref(jni::LocalRef(jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_ClientConfiguration, bookkeeper::jm_ClientConfiguration_init)))
 {
 }
 
-bookkeeper::ClientConfiguration& bookkeeper::ClientConfiguration::setMetadataServiceUri(std::string& uri)
+bookkeeper::LocalClientConfiguration& bookkeeper::LocalClientConfiguration::setMetadataServiceUri(std::string& uri)
 {
    JNIEnv* env = jni::JVM_REF->getEnv();
    jstring uri_jstring = env->NewStringUTF(uri.c_str());
@@ -335,44 +351,44 @@ bookkeeper::ClientConfiguration& bookkeeper::ClientConfiguration::setMetadataSer
    return *this;
 }
 
-bookkeeper::DigestType bookkeeper::DigestType::CRC32()
+bookkeeper::LocalDigestType bookkeeper::LocalDigestType::CRC32()
 {
    jobject ptr = jni::JVM_REF->getEnv()->GetStaticObjectField(bookkeeper::jc_DigestType, bookkeeper::jf_DigestType_CRC32);
-   return bookkeeper::DigestType(jni::JObjectRef(ptr));
+   return bookkeeper::LocalDigestType(jni::LocalRef(ptr));
 }
 
-bookkeeper::DigestType bookkeeper::DigestType::CRC32C()
+bookkeeper::LocalDigestType bookkeeper::LocalDigestType::CRC32C()
 {
    jobject ptr = jni::JVM_REF->getEnv()->GetStaticObjectField(bookkeeper::jc_DigestType, bookkeeper::jf_DigestType_CRC32C);
-   return bookkeeper::DigestType(jni::JObjectRef(ptr));
+   return bookkeeper::LocalDigestType(jni::LocalRef(ptr));
 }
 
-bookkeeper::DigestType bookkeeper::DigestType::DUMMY()
+bookkeeper::LocalDigestType bookkeeper::LocalDigestType::DUMMY()
 {
    jobject ptr = jni::JVM_REF->getEnv()->GetStaticObjectField(bookkeeper::jc_DigestType, bookkeeper::jf_DigestType_DUMMY);
-   return bookkeeper::DigestType(jni::JObjectRef(ptr));
+   return bookkeeper::LocalDigestType(jni::LocalRef(ptr));
 }
 
-bookkeeper::DigestType bookkeeper::DigestType::MAC()
+bookkeeper::LocalDigestType bookkeeper::LocalDigestType::MAC()
 {
    jobject ptr = jni::JVM_REF->getEnv()->GetStaticObjectField(bookkeeper::jc_DigestType, bookkeeper::jf_DigestType_MAC);
-   return bookkeeper::DigestType(jni::JObjectRef(ptr));
+   return bookkeeper::LocalDigestType(jni::LocalRef(ptr));
 }
 
-bookkeeper::BookKeeper::BookKeeper(bookkeeper::ClientConfiguration& configuration)
-    : ref(jni::JObjectRef(
-          jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_BookKeeper, bookkeeper::jm_BookKeeper_init, jni::getJObject(configuration.ref))))
+bookkeeper::GlobalBookKeeper::GlobalBookKeeper(bookkeeper::LocalClientConfiguration& configuration)
+    : ref(jni::GlobalRef(jni::LocalRef(
+          jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_BookKeeper, bookkeeper::jm_BookKeeper_init, jni::getJObject(configuration.ref)))))
 {
    jni::check_java_exception(jni::JVM_REF->getEnv());
 }
 
-bookkeeper::BookKeeper::~BookKeeper()
+bookkeeper::GlobalBookKeeper::~GlobalBookKeeper()
 {
    ref.callNonVirtualObjectMethod(bookkeeper::jc_BookKeeper, bookkeeper::jm_BookKeeper_close);
    jni::check_java_exception(jni::JVM_REF->getEnv());
 }
 
-jni::JObjectRef bookkeeper::BookKeeper::createLedger(int ensemble, int quorum, DigestType& digest, char* password, int password_length)
+jni::LocalRef bookkeeper::GlobalBookKeeper::createLedger(int ensemble, int quorum, LocalDigestType& digest, char* password, int password_length)
 {
    JNIEnv* env = jni::JVM_REF->getEnv();
    jbyteArray password_jbyte_array = env->NewByteArray(password_length);
@@ -383,22 +399,22 @@ jni::JObjectRef bookkeeper::BookKeeper::createLedger(int ensemble, int quorum, D
                                                    jni::getJObject(digest.ref), password_jbyte_array);
    env->DeleteLocalRef(password_jbyte_array);
    jni::check_java_exception(env);
-   return jni::JObjectRef(ledger);
+   return jni::LocalRef(ledger);
 }
 
-bookkeeper::AsyncLedgerContext::AsyncLedgerContext(jni::JObjectRef& ledger_ref)
-    : ref(jni::JObjectRef(
-          jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_AsyncLedgerContext, bookkeeper::jm_AsyncLedgerContext_init, jni::getJObject(ledger_ref))))
+bookkeeper::GlobalAsyncLedgerContext::GlobalAsyncLedgerContext(jni::JObjectRef& ledger_ref)
+    : ref(jni::GlobalRef(jni::LocalRef(
+          jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_AsyncLedgerContext, bookkeeper::jm_AsyncLedgerContext_init, jni::getJObject(ledger_ref)))))
 {
 }
 
-bookkeeper::AsyncLedgerContext::~AsyncLedgerContext()
+bookkeeper::GlobalAsyncLedgerContext::~GlobalAsyncLedgerContext()
 {
    ref.callNonVirtualObjectMethod(bookkeeper::jc_AsyncLedgerContext, bookkeeper::jm_AsyncLedgerContext_close);
    jni::check_java_exception(jni::JVM_REF->getEnv());
 }
 
-void bookkeeper::AsyncLedgerContext::appendAsync(unsigned char* payload, int payload_length)
+void bookkeeper::GlobalAsyncLedgerContext::appendAsync(unsigned char* payload, int payload_length)
 {
    JNIEnv* env = jni::JVM_REF->getEnv();
    jbyteArray payload_jbyte_array = env->NewByteArray(payload_length);
@@ -410,7 +426,7 @@ void bookkeeper::AsyncLedgerContext::appendAsync(unsigned char* payload, int pay
    jni::check_java_exception(jni::JVM_REF->getEnv());
 }
 
-std::vector<long> bookkeeper::AsyncLedgerContext::awaitAll()
+std::vector<long> bookkeeper::GlobalAsyncLedgerContext::awaitAll()
 {
    JNIEnv* env = jni::JVM_REF->getEnv();
    jlongArray entry_ids_jlong_array =

@@ -20,19 +20,42 @@ class JObjectRef
   protected:
    jobject object;
 
+   JObjectRef(jobject);
+
   public:
+   friend class LocalRef;
+   friend class GlobalRef;
    friend jobject getJObject(JObjectRef&);
 
-   JObjectRef(jobject);
-   JObjectRef(const JObjectRef&);
-   JObjectRef(JObjectRef&&);
-   ~JObjectRef();
-
-   JObjectRef& operator=(const JObjectRef&);
-   JObjectRef& operator=(JObjectRef&&);
+   virtual ~JObjectRef() = default;
 
    template <typename... Args>
    jobject callNonVirtualObjectMethod(jclass, jmethodID, Args...);
+};
+
+class LocalRef : public JObjectRef
+{
+  public:
+   LocalRef(jobject);
+   LocalRef(const LocalRef&) = delete;
+   LocalRef(LocalRef&&);
+   ~LocalRef() override;
+
+   LocalRef& operator=(const LocalRef&) = delete;
+   LocalRef& operator=(LocalRef&&);
+};
+
+class GlobalRef : public JObjectRef
+{
+  public:
+   GlobalRef(LocalRef);
+   GlobalRef(LocalRef&);
+   GlobalRef(const GlobalRef&);
+   GlobalRef(GlobalRef&&);
+   ~GlobalRef() override;
+
+   GlobalRef& operator=(const GlobalRef&);
+   GlobalRef& operator=(GlobalRef&&);
 };
 }  // namespace jni
 
@@ -40,11 +63,11 @@ namespace java
 {
 namespace lang
 {
-class Throwable
+class LocalThrowable
 {
   public:
-   jni::JObjectRef ref;
-   Throwable(jthrowable);
+   jni::LocalRef ref;
+   LocalThrowable(jthrowable);
    std::string getMessage();
 };
 }  // namespace lang
@@ -52,39 +75,39 @@ class Throwable
 
 namespace bookkeeper
 {
-class ClientConfiguration
+class LocalClientConfiguration
 {
   public:
-   jni::JObjectRef ref;
-   ClientConfiguration();
-   ClientConfiguration& setMetadataServiceUri(std::string&);
+   jni::LocalRef ref;
+   LocalClientConfiguration();
+   LocalClientConfiguration& setMetadataServiceUri(std::string&);
 };
 
-class DigestType
+class LocalDigestType
 {
   public:
-   jni::JObjectRef ref;
-   static DigestType CRC32();
-   static DigestType CRC32C();
-   static DigestType DUMMY();
-   static DigestType MAC();
+   jni::LocalRef ref;
+   static LocalDigestType CRC32();
+   static LocalDigestType CRC32C();
+   static LocalDigestType DUMMY();
+   static LocalDigestType MAC();
 };
 
-class BookKeeper
+class GlobalBookKeeper
 {
   public:
-   jni::JObjectRef ref;
-   BookKeeper(ClientConfiguration&);
-   ~BookKeeper();
-   jni::JObjectRef createLedger(int, int, DigestType&, char*, int);
+   jni::GlobalRef ref;
+   GlobalBookKeeper(LocalClientConfiguration&);
+   ~GlobalBookKeeper();
+   jni::LocalRef createLedger(int, int, LocalDigestType&, char*, int);
 };
 
-class AsyncLedgerContext
+class GlobalAsyncLedgerContext
 {
   public:
-   jni::JObjectRef ref;
-   AsyncLedgerContext(jni::JObjectRef&);
-   ~AsyncLedgerContext();
+   jni::GlobalRef ref;
+   GlobalAsyncLedgerContext(jni::JObjectRef&);
+   ~GlobalAsyncLedgerContext();
 
    void appendAsync(unsigned char*, int);
    std::vector<long> awaitAll();
