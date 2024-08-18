@@ -96,16 +96,16 @@ class GlobalBookKeeper
 {
   public:
    jni::GlobalRef ref;
-   GlobalBookKeeper(jni::JObjectRef&);
+   GlobalBookKeeper(LocalClientConfiguration);
    ~GlobalBookKeeper();
-   jni::LocalRef createLedger(int, int, LocalDigestType&, char*, int);
+   jni::LocalRef createLedger(int, int, LocalDigestType, char*, int);
 };
 
 class GlobalAsyncLedgerContext
 {
   public:
    jni::GlobalRef ref;
-   GlobalAsyncLedgerContext(jni::JObjectRef&);
+   GlobalAsyncLedgerContext(jni::LocalRef);
    ~GlobalAsyncLedgerContext();
    void appendAsync(unsigned char*, int);
    std::vector<long> awaitAll();

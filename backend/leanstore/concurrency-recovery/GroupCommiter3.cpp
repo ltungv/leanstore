@@ -22,12 +22,12 @@ void CRManager::groupCommiter3()
    {
       bookkeeper::LocalClientConfiguration client_configuration;
       client_configuration.setMetadataServiceUri(FLAGS_bookkeeper_metadata_uri);
-      bookkeeper::GlobalBookKeeper bookkeeper(client_configuration.ref);
+      bookkeeper::GlobalBookKeeper bookkeeper(std::move(client_configuration));
 
       bookkeeper::LocalDigestType digest = bookkeeper::LocalDigestType::DUMMY();
       std::vector<char> digest_password = {};
-      jni::LocalRef ledger_ref = bookkeeper.createLedger(3, 3, digest, digest_password.data(), digest_password.size());
-      bookkeeper::GlobalAsyncLedgerContext bookkeeper_ledger(ledger_ref);
+      jni::LocalRef ledger_ref = bookkeeper.createLedger(3, 3, std::move(digest), digest_password.data(), digest_password.size());
+      bookkeeper::GlobalAsyncLedgerContext ledger_context(std::move(ledger_ref));
 
       using Time = decltype(std::chrono::high_resolution_clock::now());
       [[maybe_unused]] Time phase_1_begin, phase_1_end, phase_2_begin, phase_2_end, write_begin, write_end;
@@ -80,7 +80,7 @@ void CRManager::groupCommiter3()
                // -------------------------------------------------------------------------------------
                if (FLAGS_wal_pwrite) {
                   // TODO: add the concept of chunks
-                  bookkeeper_ledger.appendAsync(worker.logging.wal_buffer + lower_offset, size_aligned);
+                  ledger_context.appendAsync(worker.logging.wal_buffer + lower_offset, size_aligned);
                   // -------------------------------------------------------------------------------------
                   COUNTERS_BLOCK()
                   {
@@ -95,7 +95,7 @@ void CRManager::groupCommiter3()
                   const u64 size_aligned = upper_offset - lower_offset;
                   // -------------------------------------------------------------------------------------
                   if (FLAGS_wal_pwrite) {
-                     bookkeeper_ledger.appendAsync(worker.logging.wal_buffer + lower_offset, size_aligned);
+                     ledger_context.appendAsync(worker.logging.wal_buffer + lower_offset, size_aligned);
                      //  -------------------------------------------------------------------------------------
                      COUNTERS_BLOCK()
                      {
@@ -110,7 +110,7 @@ void CRManager::groupCommiter3()
                   const u64 size_aligned = upper_offset - lower_offset;
                   // -------------------------------------------------------------------------------------
                   if (FLAGS_wal_pwrite) {
-                     bookkeeper_ledger.appendAsync(worker.logging.wal_buffer, size_aligned);
+                     ledger_context.appendAsync(worker.logging.wal_buffer, size_aligned);
                      //  -------------------------------------------------------------------------------------
                      COUNTERS_BLOCK()
                      {
@@ -130,7 +130,7 @@ void CRManager::groupCommiter3()
          // -------------------------------------------------------------------------------------
          // Flush
          if (FLAGS_wal_pwrite) {
-            bookkeeper_ledger.awaitAll();
+            ledger_context.awaitAll();
          }
          // -------------------------------------------------------------------------------------
          COUNTERS_BLOCK()

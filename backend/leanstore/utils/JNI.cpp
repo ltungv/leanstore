@@ -130,7 +130,7 @@ static void check_java_exception(JNIEnv* env)
    jthrowable throwable_ptr = env->ExceptionOccurred();
    if (throwable_ptr != nullptr) {
       env->ExceptionClear();
-      jni::LocalRef throwable_ref = jni::LocalRef(throwable_ptr);
+      jni::LocalRef throwable_ref(throwable_ptr);
       java::lang::LocalThrowable throwable(throwable_ref);
       std::runtime_error error(throwable.getMessage());
       throw error;
@@ -375,9 +375,9 @@ bookkeeper::LocalDigestType bookkeeper::LocalDigestType::MAC()
    return bookkeeper::LocalDigestType(jni::LocalRef(ptr));
 }
 
-bookkeeper::GlobalBookKeeper::GlobalBookKeeper(jni::JObjectRef& configuration_ref)
+bookkeeper::GlobalBookKeeper::GlobalBookKeeper(bookkeeper::LocalClientConfiguration configuration)
     : ref(jni::GlobalRef(jni::LocalRef(
-          jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_BookKeeper, bookkeeper::jm_BookKeeper_init, jni::getJObject(configuration_ref)))))
+          jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_BookKeeper, bookkeeper::jm_BookKeeper_init, jni::getJObject(configuration.ref)))))
 {
    jni::check_java_exception(jni::JVM_REF->getEnv());
 }
@@ -388,7 +388,7 @@ bookkeeper::GlobalBookKeeper::~GlobalBookKeeper()
    jni::check_java_exception(jni::JVM_REF->getEnv());
 }
 
-jni::LocalRef bookkeeper::GlobalBookKeeper::createLedger(int ensemble, int quorum, LocalDigestType& digest, char* password, int password_length)
+jni::LocalRef bookkeeper::GlobalBookKeeper::createLedger(int ensemble, int quorum, LocalDigestType digest, char* password, int password_length)
 {
    JNIEnv* env = jni::JVM_REF->getEnv();
    jbyteArray password_jbyte_array = env->NewByteArray(password_length);
@@ -402,7 +402,7 @@ jni::LocalRef bookkeeper::GlobalBookKeeper::createLedger(int ensemble, int quoru
    return jni::LocalRef(ledger);
 }
 
-bookkeeper::GlobalAsyncLedgerContext::GlobalAsyncLedgerContext(jni::JObjectRef& ledger_ref)
+bookkeeper::GlobalAsyncLedgerContext::GlobalAsyncLedgerContext(jni::LocalRef ledger_ref)
     : ref(jni::GlobalRef(jni::LocalRef(
           jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_AsyncLedgerContext, bookkeeper::jm_AsyncLedgerContext_init, jni::getJObject(ledger_ref)))))
 {
