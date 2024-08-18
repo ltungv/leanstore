@@ -130,7 +130,8 @@ static void check_java_exception(JNIEnv* env)
    jthrowable throwable_ptr = env->ExceptionOccurred();
    if (throwable_ptr != nullptr) {
       env->ExceptionClear();
-      java::lang::LocalThrowable throwable(throwable_ptr);
+      jni::LocalRef throwable_ref = jni::LocalRef(throwable_ptr);
+      java::lang::LocalThrowable throwable(throwable_ref);
       std::runtime_error error(throwable.getMessage());
       throw error;
    }
@@ -304,7 +305,6 @@ jni::LocalRef& jni::LocalRef::operator=(LocalRef&& ref)
 }
 
 jni::GlobalRef::GlobalRef(jni::LocalRef ref) : JObjectRef(JVM_REF->getEnv()->NewGlobalRef(ref.object)) {}
-jni::GlobalRef::GlobalRef(jni::LocalRef& ref) : JObjectRef(JVM_REF->getEnv()->NewGlobalRef(ref.object)) {}
 jni::GlobalRef::GlobalRef(const GlobalRef& ref) : jni::JObjectRef(JVM_REF->getEnv()->NewGlobalRef(ref.object)) {}
 jni::GlobalRef::GlobalRef(GlobalRef&& ref) : JObjectRef(std::move(ref.object)) {};
 jni::GlobalRef::~GlobalRef()
@@ -324,7 +324,7 @@ jni::GlobalRef& jni::GlobalRef::operator=(GlobalRef&& ref)
    return *this;
 }
 
-java::lang::LocalThrowable::LocalThrowable(jthrowable throwable) : ref(jni::LocalRef(throwable)) {}
+java::lang::LocalThrowable::LocalThrowable(jni::LocalRef& ref) : ref(std::move(ref)) {}
 
 std::string java::lang::LocalThrowable::getMessage()
 {
@@ -375,9 +375,9 @@ bookkeeper::LocalDigestType bookkeeper::LocalDigestType::MAC()
    return bookkeeper::LocalDigestType(jni::LocalRef(ptr));
 }
 
-bookkeeper::GlobalBookKeeper::GlobalBookKeeper(bookkeeper::LocalClientConfiguration& configuration)
+bookkeeper::GlobalBookKeeper::GlobalBookKeeper(jni::JObjectRef& configuration_ref)
     : ref(jni::GlobalRef(jni::LocalRef(
-          jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_BookKeeper, bookkeeper::jm_BookKeeper_init, jni::getJObject(configuration.ref)))))
+          jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_BookKeeper, bookkeeper::jm_BookKeeper_init, jni::getJObject(configuration_ref)))))
 {
    jni::check_java_exception(jni::JVM_REF->getEnv());
 }

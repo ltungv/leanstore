@@ -49,7 +49,6 @@ class GlobalRef : public JObjectRef
 {
   public:
    GlobalRef(LocalRef);
-   GlobalRef(LocalRef&);
    GlobalRef(const GlobalRef&);
    GlobalRef(GlobalRef&&);
    ~GlobalRef() override;
@@ -67,7 +66,7 @@ class LocalThrowable
 {
   public:
    jni::LocalRef ref;
-   LocalThrowable(jthrowable);
+   LocalThrowable(jni::LocalRef&);
    std::string getMessage();
 };
 }  // namespace lang
@@ -97,7 +96,7 @@ class GlobalBookKeeper
 {
   public:
    jni::GlobalRef ref;
-   GlobalBookKeeper(LocalClientConfiguration&);
+   GlobalBookKeeper(jni::JObjectRef&);
    ~GlobalBookKeeper();
    jni::LocalRef createLedger(int, int, LocalDigestType&, char*, int);
 };
@@ -108,7 +107,6 @@ class GlobalAsyncLedgerContext
    jni::GlobalRef ref;
    GlobalAsyncLedgerContext(jni::JObjectRef&);
    ~GlobalAsyncLedgerContext();
-
    void appendAsync(unsigned char*, int);
    std::vector<long> awaitAll();
 };

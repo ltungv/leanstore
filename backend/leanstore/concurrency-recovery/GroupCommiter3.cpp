@@ -22,7 +22,7 @@ void CRManager::groupCommiter3()
    {
       bookkeeper::LocalClientConfiguration client_configuration;
       client_configuration.setMetadataServiceUri(FLAGS_bookkeeper_metadata_uri);
-      bookkeeper::GlobalBookKeeper bookkeeper(client_configuration);
+      bookkeeper::GlobalBookKeeper bookkeeper(client_configuration.ref);
 
       bookkeeper::LocalDigestType digest = bookkeeper::LocalDigestType::DUMMY();
       std::vector<char> digest_password = {};
