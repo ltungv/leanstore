@@ -47,6 +47,48 @@ static jmethodID jm_AsyncLedgerContext_close;
 namespace jni
 {
 static const jint VERSION = JNI_VERSION_10;
+
+class JVMRef
+{
+  private:
+   JavaVM* jvm;
+
+  public:
+   JVMRef(JavaVM* jvm) : jvm(jvm) {}
+   JVMRef(const JVMRef&) = delete;
+   JVMRef(JVMRef&& ref) : jvm(std::move(ref.jvm)) {};
+   ~JVMRef() { jvm->DestroyJavaVM(); }
+
+   JVMRef& operator=(const JVMRef&) = delete;
+   JVMRef& operator=(JVMRef&& ref)
+   {
+      jvm = std::move(ref.jvm);
+      return *this;
+   }
+
+   JNIEnv* getEnv()
+   {
+      JNIEnv* env;
+      jvm->GetEnv(reinterpret_cast<void**>(&env), VERSION);
+      return env;
+   }
+
+   void attachThread()
+   {
+      JNIEnv* env;
+      if (jvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr) != JNI_OK) {
+         SetupFailed("Could not attach the current thread to the JVM");
+      }
+   }
+
+   void detachThread()
+   {
+      if (jvm->DetachCurrentThread() != JNI_OK) {
+         SetupFailed("Could not detach the current thread from the JVM");
+      }
+   }
+};
+
 static std::atomic_bool IS_LOADED;
 static std::unique_ptr<JVMRef> JVM_REF;
 
@@ -58,7 +100,6 @@ static jclass mustFindClass(JNIEnv* env, const std::string& name)
       env->ExceptionClear();
       SetupFailed("Could not find class");
    }
-   std::cout << "Loaded " << name << std::endl;
    return clazz;
 }
 
@@ -70,7 +111,6 @@ static jfieldID mustGetStaticFieldID(JNIEnv* env, jclass clazz, const std::strin
       env->ExceptionClear();
       SetupFailed("Could not find static field");
    }
-   std::cout << "Loaded " << name << " : " << signature << std::endl;
    return id;
 }
 
@@ -82,7 +122,6 @@ static jmethodID mustGetMethodID(JNIEnv* env, jclass clazz, const std::string& n
       env->ExceptionClear();
       SetupFailed("Could not find method");
    }
-   std::cout << "Loaded " << name << " : " << signature << std::endl;
    return id;
 }
 
@@ -205,7 +244,6 @@ void jni::init(std::string& classpath)
 {
    bool expect_is_loaded = false;
    if (IS_LOADED.compare_exchange_strong(expect_is_loaded, true)) {
-      std::cout << classpath << std::endl;
       JavaVMOption options[1];
       options[0].optionString = classpath.data();
       JavaVMInitArgs init_args = {
@@ -220,7 +258,7 @@ void jni::init(std::string& classpath)
          SetupFailed("Could not create Java VM");
       }
       loadClassAndMethodReferences(env);
-      JVM_REF.reset(new JVMRef(jvm));
+      JVM_REF = std::make_unique<JVMRef>(jvm);
    }
 }
 
@@ -233,24 +271,14 @@ void jni::deinit()
    }
 }
 
-jni::JVMRef::JVMRef(JavaVM* jvm) : jvm(jvm) {}
-jni::JVMRef::~JVMRef()
+void jni::attachThread()
 {
-   jvm->DestroyJavaVM();
+   JVM_REF->attachThread();
 }
 
-jni::JVMRef::JVMRef(JVMRef&& ref) : jvm(std::move(ref.jvm)) {};
-jni::JVMRef& jni::JVMRef::operator=(JVMRef&& ref)
+void jni::detachThread()
 {
-   jvm = std::move(ref.jvm);
-   return *this;
-}
-
-JNIEnv* jni::JVMRef::getEnv()
-{
-   JNIEnv* env;
-   jvm->GetEnv(reinterpret_cast<void**>(&env), VERSION);
-   return env;
+   JVM_REF->attachThread();
 }
 
 jni::JObjectRef::JObjectRef(jobject object) : object(object) {}
@@ -360,7 +388,7 @@ bookkeeper::GlobalBookKeeper::~GlobalBookKeeper()
    jni::check_java_exception(jni::JVM_REF->getEnv());
 }
 
-jni::LocalRef bookkeeper::GlobalBookKeeper::createLedger(int ensemble, int quorum, jni::JObjectRef& digest, char* password, int password_length)
+jni::LocalRef bookkeeper::GlobalBookKeeper::createLedger(int ensemble, int quorum, LocalDigestType& digest, char* password, int password_length)
 {
    JNIEnv* env = jni::JVM_REF->getEnv();
    jbyteArray password_jbyte_array = env->NewByteArray(password_length);
@@ -368,13 +396,13 @@ jni::LocalRef bookkeeper::GlobalBookKeeper::createLedger(int ensemble, int quoru
    memcpy(password_bytes, password, password_length);
    env->ReleaseByteArrayElements(password_jbyte_array, password_bytes, 0);
    jobject ledger = ref.callNonVirtualObjectMethod(bookkeeper::jc_BookKeeper, bookkeeper::jm_BookKeeper_createLedger, ensemble, quorum,
-                                                   jni::getJObject(digest), password_jbyte_array);
+                                                   jni::getJObject(digest.ref), password_jbyte_array);
    env->DeleteLocalRef(password_jbyte_array);
    jni::check_java_exception(env);
    return jni::LocalRef(ledger);
 }
 
-bookkeeper::GlobalAsyncLedgerContext::GlobalAsyncLedgerContext(jni::LocalRef& ledger_ref)
+bookkeeper::GlobalAsyncLedgerContext::GlobalAsyncLedgerContext(jni::JObjectRef& ledger_ref)
     : ref(jni::GlobalRef(jni::LocalRef(
           jni::JVM_REF->getEnv()->NewObject(bookkeeper::jc_AsyncLedgerContext, bookkeeper::jm_AsyncLedgerContext_init, jni::getJObject(ledger_ref)))))
 {
@@ -386,7 +414,7 @@ bookkeeper::GlobalAsyncLedgerContext::~GlobalAsyncLedgerContext()
    jni::check_java_exception(jni::JVM_REF->getEnv());
 }
 
-void bookkeeper::GlobalAsyncLedgerContext::appendAsync(char* payload, int payload_length)
+void bookkeeper::GlobalAsyncLedgerContext::appendAsync(unsigned char* payload, int payload_length)
 {
    JNIEnv* env = jni::JVM_REF->getEnv();
    jbyteArray payload_jbyte_array = env->NewByteArray(payload_length);

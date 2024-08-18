@@ -2,7 +2,6 @@
 
 #include "jni.h"
 
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -13,20 +12,8 @@ namespace jni
 void init(std::string&);
 void deinit();
 
-class JVMRef
-{
-  private:
-   JavaVM* jvm;
-
-  public:
-   JVMRef(JavaVM*);
-   ~JVMRef();
-   JVMRef(const JVMRef&) = delete;
-   JVMRef& operator=(const JVMRef&) = delete;
-   JVMRef(JVMRef&&);
-   JVMRef& operator=(JVMRef&&);
-   JNIEnv* getEnv();
-};
+void attachThread();
+void detachThread();
 
 class JObjectRef
 {
@@ -112,17 +99,17 @@ class GlobalBookKeeper
    jni::GlobalRef ref;
    GlobalBookKeeper(LocalClientConfiguration&);
    ~GlobalBookKeeper();
-   jni::LocalRef createLedger(int, int, jni::JObjectRef&, char*, int);
+   jni::LocalRef createLedger(int, int, LocalDigestType&, char*, int);
 };
 
 class GlobalAsyncLedgerContext
 {
   public:
    jni::GlobalRef ref;
-   GlobalAsyncLedgerContext(jni::LocalRef&);
+   GlobalAsyncLedgerContext(jni::JObjectRef&);
    ~GlobalAsyncLedgerContext();
 
-   void appendAsync(char*, int);
+   void appendAsync(unsigned char*, int);
    std::vector<long> awaitAll();
 };
 }  // namespace bookkeeper

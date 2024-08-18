@@ -2,15 +2,12 @@ package de.tu_darmstadt.systems;
 
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.LedgerHandle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncLedgerContext implements AutoCloseable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AsyncLedgerContext.class);
     private final LedgerHandle ledgerHandle;
     private final List<CompletableFuture<Long>> onGoingRequests;
 
@@ -21,7 +18,6 @@ public class AsyncLedgerContext implements AutoCloseable {
 
     public void appendAsync(byte[] data) {
         onGoingRequests.add(ledgerHandle.appendAsync(data));
-        LOGGER.info("appending {}", data);
     }
 
     public long[] awaitAll() {

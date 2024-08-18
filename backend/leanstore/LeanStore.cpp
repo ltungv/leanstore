@@ -67,9 +67,6 @@ LeanStore::LeanStore()
       if (FLAGS_bookkeeper_ensemble < FLAGS_bookkeeper_quorum) {
          SetupFailed("You have to provide a quorum size greater than the ensemble size");
       }
-      std::string classpath = "-Djava.class.path=";
-      classpath.append(collectJarPaths());
-      jni::init(classpath);
    }
    // -------------------------------------------------------------------------------------
    // Set the default logger to file logger
@@ -468,9 +465,6 @@ LeanStore::~LeanStore()
    if (FLAGS_persist) {
       serializeState();
       buffer_manager->writeAllBufferFrames();
-   }
-   if (FLAGS_wal_variant == 3) {
-      jni::deinit();
    }
 }
 // -------------------------------------------------------------------------------------

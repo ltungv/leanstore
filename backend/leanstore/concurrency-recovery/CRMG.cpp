@@ -2,6 +2,7 @@
 
 #include "leanstore/profiling/counters/CPUCounters.hpp"
 #include "leanstore/profiling/counters/WorkerCounters.hpp"
+#include "leanstore/utils/JNI.hpp"
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 #include <mutex>
@@ -19,6 +20,7 @@ std::atomic<u64> CRManager::g_ssd_offset = 0;
 CRManager::CRManager(HistoryTreeInterface& versions_space, s32 ssd_fd, u64 end_of_block_device)
     : ssd_fd(ssd_fd), end_of_block_device(end_of_block_device), versions_space(versions_space)
 {
+   // -------------------------------------------------------------------------------------
    workers_count = FLAGS_worker_threads;
    g_ssd_offset = end_of_block_device;
    ensure(workers_count < MAX_WORKER_THREADS);
@@ -78,6 +80,21 @@ CRManager::CRManager(HistoryTreeInterface& versions_space, s32 ssd_fd, u64 end_o
                utils::pinThisThread(workers_count);
             }
             groupCommiter();
+         });
+         group_commiter.detach();
+      } else if (FLAGS_wal_variant == 3) {
+         std::string classpath = "-Djava.class.path=";
+         classpath.append(collectJarPaths());
+         jni::init(classpath);
+
+         std::thread group_commiter([&]() {
+            if (FLAGS_pin_threads) {
+               utils::pinThisThread(workers_count);
+            }
+            jni::attachThread();
+            groupCommiter3();
+            jni::detachThread();
+            jni::deinit();
          });
          group_commiter.detach();
       } else {
