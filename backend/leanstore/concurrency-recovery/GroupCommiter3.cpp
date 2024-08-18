@@ -20,14 +20,14 @@ namespace cr
 void CRManager::groupCommiter3()
 {
    {
-      bookkeeper::LocalClientConfiguration client_configuration;
+      bookkeeper::ClientConfiguration client_configuration;
       client_configuration.setMetadataServiceUri(FLAGS_bookkeeper_metadata_uri);
-      bookkeeper::GlobalBookKeeper bookkeeper(client_configuration);
+      bookkeeper::BookKeeper bookkeeper(client_configuration);
 
-      bookkeeper::LocalDigestType digest = bookkeeper::LocalDigestType::DUMMY();
+      bookkeeper::DigestType digest = bookkeeper::DigestType::DUMMY();
       std::vector<char> digest_password = {};
-      jni::LocalRef ledger_ref = bookkeeper.createLedger(3, 3, digest, digest_password.data(), digest_password.size());
-      bookkeeper::GlobalAsyncLedgerContext bookkeeper_ledger(ledger_ref);
+      jni::JObjectRef ledger_ref = bookkeeper.createLedger(3, 3, digest, digest_password.data(), digest_password.size());
+      bookkeeper::AsyncLedgerContext bookkeeper_ledger(ledger_ref);
 
       using Time = decltype(std::chrono::high_resolution_clock::now());
       [[maybe_unused]] Time phase_1_begin, phase_1_end, phase_2_begin, phase_2_end, write_begin, write_end;
