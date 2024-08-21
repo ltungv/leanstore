@@ -130,8 +130,7 @@ static void check_java_exception(JNIEnv* env)
    jthrowable throwable_ptr = env->ExceptionOccurred();
    if (throwable_ptr != nullptr) {
       env->ExceptionClear();
-      jni::LocalRef throwable_ref(throwable_ptr);
-      java::lang::LocalThrowable throwable(std::move(throwable_ref));
+      java::lang::LocalThrowable throwable((jni::LocalRef(throwable_ptr)));
       std::runtime_error error(throwable.getMessage());
       throw error;
    }
@@ -298,7 +297,7 @@ jni::LocalRef::LocalRef(LocalRef&& ref) : JObjectRef(std::move(ref.object))
 };
 jni::LocalRef::~LocalRef()
 {
-   if (this->object != nullptr) {
+   if (object != nullptr) {
       JVM_REF->getEnv()->DeleteLocalRef(object);
    }
 };
@@ -318,7 +317,7 @@ jni::GlobalRef::GlobalRef(GlobalRef&& ref) : JObjectRef(std::move(ref.object))
 };
 jni::GlobalRef::~GlobalRef()
 {
-   if (this->object != nullptr) {
+   if (object != nullptr) {
       JVM_REF->getEnv()->DeleteGlobalRef(object);
    }
 };
