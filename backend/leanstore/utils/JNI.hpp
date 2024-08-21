@@ -66,7 +66,7 @@ class LocalThrowable
 {
   public:
    jni::LocalRef ref;
-   LocalThrowable(jni::LocalRef&);
+   LocalThrowable(jni::LocalRef);
    std::string getMessage();
 };
 }  // namespace lang
@@ -84,6 +84,9 @@ class LocalClientConfiguration
 
 class LocalDigestType
 {
+  private:
+   LocalDigestType(jni::LocalRef);
+
   public:
    jni::LocalRef ref;
    static LocalDigestType CRC32();

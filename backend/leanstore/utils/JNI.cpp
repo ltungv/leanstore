@@ -131,7 +131,7 @@ static void check_java_exception(JNIEnv* env)
    if (throwable_ptr != nullptr) {
       env->ExceptionClear();
       jni::LocalRef throwable_ref(throwable_ptr);
-      java::lang::LocalThrowable throwable(throwable_ref);
+      java::lang::LocalThrowable throwable(std::move(throwable_ref));
       std::runtime_error error(throwable.getMessage());
       throw error;
    }
@@ -292,10 +292,15 @@ jobject jni::JObjectRef::callNonVirtualObjectMethod(jclass clazz, jmethodID meth
 }
 
 jni::LocalRef::LocalRef(jobject object) : JObjectRef(object) {}
-jni::LocalRef::LocalRef(LocalRef&& ref) : JObjectRef(std::move(ref.object)) {};
+jni::LocalRef::LocalRef(LocalRef&& ref) : JObjectRef(std::move(ref.object))
+{
+   ref.object = nullptr;
+};
 jni::LocalRef::~LocalRef()
 {
-   JVM_REF->getEnv()->DeleteLocalRef(object);
+   if (this->object != nullptr) {
+      JVM_REF->getEnv()->DeleteLocalRef(object);
+   }
 };
 
 jni::LocalRef& jni::LocalRef::operator=(LocalRef&& ref)
@@ -306,10 +311,15 @@ jni::LocalRef& jni::LocalRef::operator=(LocalRef&& ref)
 
 jni::GlobalRef::GlobalRef(jni::LocalRef ref) : JObjectRef(JVM_REF->getEnv()->NewGlobalRef(ref.object)) {}
 jni::GlobalRef::GlobalRef(const GlobalRef& ref) : jni::JObjectRef(JVM_REF->getEnv()->NewGlobalRef(ref.object)) {}
-jni::GlobalRef::GlobalRef(GlobalRef&& ref) : JObjectRef(std::move(ref.object)) {};
+jni::GlobalRef::GlobalRef(GlobalRef&& ref) : JObjectRef(std::move(ref.object))
+{
+   ref.object = nullptr;
+};
 jni::GlobalRef::~GlobalRef()
 {
-   JVM_REF->getEnv()->DeleteGlobalRef(object);
+   if (this->object != nullptr) {
+      JVM_REF->getEnv()->DeleteGlobalRef(object);
+   }
 };
 
 jni::GlobalRef& jni::GlobalRef::operator=(const jni::GlobalRef& ref)
@@ -324,7 +334,7 @@ jni::GlobalRef& jni::GlobalRef::operator=(GlobalRef&& ref)
    return *this;
 }
 
-java::lang::LocalThrowable::LocalThrowable(jni::LocalRef& ref) : ref(std::move(ref)) {}
+java::lang::LocalThrowable::LocalThrowable(jni::LocalRef ref) : ref(std::move(ref)) {}
 
 std::string java::lang::LocalThrowable::getMessage()
 {
@@ -350,6 +360,8 @@ bookkeeper::LocalClientConfiguration& bookkeeper::LocalClientConfiguration::setM
    env->DeleteLocalRef(uri_jstring);
    return *this;
 }
+
+bookkeeper::LocalDigestType::LocalDigestType(jni::LocalRef ref) : ref(std::move(ref)) {}
 
 bookkeeper::LocalDigestType bookkeeper::LocalDigestType::CRC32()
 {
