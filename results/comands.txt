@@ -1,0 +1,5 @@
+ run in ~/leanstore/build/frontend
+
+ ./tpcc --tpcc_warehouse_count=4 --notpcc_warehouse_affinity --worker_threads=4 --pp_threads=16 --free_pct=1 --contention_split --xmerge --warmup_for_seconds=12 --run_for_seconds=120 --isolation_level=si --bookkeeper_jar_directories=../../bookkeeper-wal/target:../../bookkeeper-wal/target/maven-dependencies  --wal_pwrite=true --profile_latency=true --csv_path=/home/lwenderoth/leanstore/results/File --wal_variant=0
+
+  ./tpcc --tpcc_warehouse_count=4 --notpcc_warehouse_affinity --worker_threads=4 --pp_threads=16 --free_pct=1 --contention_split --xmerge --warmup_for_seconds=12 --run_for_seconds=120 --isolation_level=si --bookkeeper_jar_directories=../../bookkeeper-wal/target:../../bookkeeper-wal/target/maven-dependencies  --wal_pwrite=true --profile_latency=true --csv_path=/home/lwenderoth/leanstore/results/BC --wal_variant=3

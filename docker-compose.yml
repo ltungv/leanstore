@@ -1,0 +1,112 @@
+services:
+  zookeeper:
+    image: zookeeper:latest
+    restart: always
+    networks:
+      - bookkeeper-internal
+    ports:
+      - 2181:2181/tcp
+    environment:
+      ZOOKEEPER_JVM_OPTS: "-Xms2g -Xmx2g"
+
+
+  bookie1:
+    image: apache/bookkeeper
+    restart: always
+    networks:
+      - bookkeeper-internal
+    ports:
+      - 3181:3181/tcp
+    links:
+      - zookeeper
+    depends_on:
+      - zookeeper
+    environment:
+      BK_zkServers: zookeeper:2181
+      BK_bookieMem: 4g
+      BK_ledgerMaxSize: 1073741824  # 1GB
+      BK_entryMaxSize: 1048576      # 1MB
+      BK_javaOpts: "-Xms8g -Xmx8g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/bookkeeper/heapdump.hprof -Xlog:gc*:file=/var/log/bookkeeper/gc.log -Xss1m -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m"
+      BK_byteBufAllocatorSizeMax: 20482258
+      BK_nettyMaxFrameSizeBytes: 15482258
+
+  bookie2:
+    image: apache/bookkeeper
+    restart: always
+    networks:
+      - bookkeeper-internal
+    ports:
+      - 3182:3181/tcp
+    links:
+      - zookeeper
+    depends_on:
+      - zookeeper
+    environment:
+      BK_zkServers: zookeeper:2181
+      BK_bookieMem: 4g
+      BK_ledgerMaxSize: 1073741824  # 1GB
+      BK_entryMaxSize: 1048576      # 1MB
+      BK_javaOpts: "-Xms8g -Xmx8g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/bookkeeper/heapdump.hprof -Xlog:gc*:file=/var/log/bookkeeper/gc.log -Xss1m -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m"
+      BK_byteBufAllocatorSizeMax: 20482258
+      BK_nettyMaxFrameSizeBytes: 15482258
+
+  bookie3:
+    image: apache/bookkeeper
+    restart: always
+    networks:
+      - bookkeeper-internal
+    ports:
+      - 3183:3181/tcp
+    links:
+      - zookeeper
+    depends_on:
+      - zookeeper
+    environment:
+      BK_zkServers: zookeeper:2181
+      BK_bookieMem: 4g
+      BK_ledgerMaxSize: 1073741824  # 1GB
+      BK_entryMaxSize: 1048576      # 1MB
+      BK_javaOpts: "-Xms8g -Xmx8g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/bookkeeper/heapdump.hprof -Xlog:gc*:file=/var/log/bookkeeper/gc.log -Xss1m -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m"
+      BK_byteBufAllocatorSizeMax: 20482258
+      BK_nettyMaxFrameSizeBytes: 15482258
+
+  bookie4:
+    image: apache/bookkeeper
+    restart: always
+    networks:
+      - bookkeeper-internal
+    ports:
+      - 3184:3181/tcp
+    links:
+      - zookeeper
+    depends_on:
+      - zookeeper
+    environment:
+      BK_zkServers: zookeeper:2181
+      BK_bookieMem: 4g
+      BK_ledgerMaxSize: 1073741824  # 1GB
+      BK_entryMaxSize: 1048576      # 1MB
+      BK_javaOpts: "-Xms8g -Xmx8g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/bookkeeper/heapdump.hprof -Xlog:gc*:file=/var/log/bookkeeper/gc.log -Xss1m -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m"
+      BK_byteBufAllocatorSizeMax: 20482258
+      BK_nettyMaxFrameSizeBytes: 15482258
+
+  bookie5:
+    image: apache/bookkeeper
+    restart: always
+    networks:
+      - bookkeeper-internal
+    ports:
+      - 3185:3181/tcp
+    links:
+      - zookeeper
+    depends_on:
+      - zookeeper
+    environment:
+      BK_zkServers: zookeeper:2181
+      BK_bookieMem: 4g
+      BK_javaOpts: "-Xms8g -Xmx8g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/bookkeeper/heapdump.hprof -Xlog:gc*:file=/var/log/bookkeeper/gc.log -Xss1m -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m"
+      BK_byteBufAllocatorSizeMax: 20482258
+      BK_nettyMaxFrameSizeBytes: 15482258
+
+networks:
+  bookkeeper-internal:
