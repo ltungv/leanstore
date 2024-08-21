@@ -351,34 +351,30 @@ bookkeeper::LocalClientConfiguration& bookkeeper::LocalClientConfiguration::setM
    return *this;
 }
 
-bookkeeper::LocalDigestType::LocalDigestType(jni::LocalRef& ref) : ref(std::move(ref)) {}
+bookkeeper::LocalDigestType::LocalDigestType(jni::LocalRef ref) : ref(std::move(ref)) {}
 
 bookkeeper::LocalDigestType bookkeeper::LocalDigestType::CRC32()
 {
    jobject ptr = jni::JVM_REF->getEnv()->GetStaticObjectField(bookkeeper::jc_DigestType, bookkeeper::jf_DigestType_CRC32);
-   jni::LocalRef ref = jni::LocalRef(ptr);
-   return bookkeeper::LocalDigestType(ref);
+   return bookkeeper::LocalDigestType(jni::LocalRef(ptr));
 }
 
 bookkeeper::LocalDigestType bookkeeper::LocalDigestType::CRC32C()
 {
    jobject ptr = jni::JVM_REF->getEnv()->GetStaticObjectField(bookkeeper::jc_DigestType, bookkeeper::jf_DigestType_CRC32C);
-   jni::LocalRef ref = jni::LocalRef(ptr);
-   return bookkeeper::LocalDigestType(ref);
+   return bookkeeper::LocalDigestType(jni::LocalRef(ptr));
 }
 
 bookkeeper::LocalDigestType bookkeeper::LocalDigestType::DUMMY()
 {
    jobject ptr = jni::JVM_REF->getEnv()->GetStaticObjectField(bookkeeper::jc_DigestType, bookkeeper::jf_DigestType_DUMMY);
-   jni::LocalRef ref = jni::LocalRef(ptr);
-   return bookkeeper::LocalDigestType(ref);
+   return bookkeeper::LocalDigestType(jni::LocalRef(ptr));
 }
 
 bookkeeper::LocalDigestType bookkeeper::LocalDigestType::MAC()
 {
    jobject ptr = jni::JVM_REF->getEnv()->GetStaticObjectField(bookkeeper::jc_DigestType, bookkeeper::jf_DigestType_MAC);
-   jni::LocalRef ref = jni::LocalRef(ptr);
-   return bookkeeper::LocalDigestType(ref);
+   return bookkeeper::LocalDigestType(jni::LocalRef(ptr));
 }
 
 bookkeeper::GlobalBookKeeper::GlobalBookKeeper(bookkeeper::LocalClientConfiguration configuration)

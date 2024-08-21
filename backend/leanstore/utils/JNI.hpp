@@ -85,7 +85,7 @@ class LocalClientConfiguration
 class LocalDigestType
 {
   private:
-   LocalDigestType(jni::LocalRef&);
+   LocalDigestType(jni::LocalRef);
 
   public:
    jni::LocalRef ref;
