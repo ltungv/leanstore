@@ -306,6 +306,7 @@ jni::LocalRef::~LocalRef()
 jni::LocalRef& jni::LocalRef::operator=(LocalRef&& ref)
 {
    object = std::move(ref.object);
+   ref.object = nullptr;
    return *this;
 }
 
@@ -331,6 +332,7 @@ jni::GlobalRef& jni::GlobalRef::operator=(const jni::GlobalRef& ref)
 jni::GlobalRef& jni::GlobalRef::operator=(GlobalRef&& ref)
 {
    object = std::move(ref.object);
+   ref.object = nullptr;
    return *this;
 }
 
