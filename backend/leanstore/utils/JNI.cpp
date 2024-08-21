@@ -351,6 +351,8 @@ bookkeeper::LocalClientConfiguration& bookkeeper::LocalClientConfiguration::setM
    return *this;
 }
 
+bookkeeper::LocalDigestType::LocalDigestType(jni::LocalRef ref) : ref(std::move(ref)) {}
+
 bookkeeper::LocalDigestType bookkeeper::LocalDigestType::CRC32()
 {
    jobject ptr = jni::JVM_REF->getEnv()->GetStaticObjectField(bookkeeper::jc_DigestType, bookkeeper::jf_DigestType_CRC32);
