@@ -84,9 +84,6 @@ class LocalClientConfiguration
 
 class LocalDigestType
 {
-  private:
-   LocalDigestType(jni::LocalRef);
-
   public:
    jni::LocalRef ref;
    static LocalDigestType CRC32();
