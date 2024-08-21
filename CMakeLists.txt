@@ -81,3 +81,6 @@ add_subdirectory("backend")
 # ---------------------------------------------------------------------------
 
 add_subdirectory("frontend")
+
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/frontend/log" "")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/frontend/leanstore" "")
