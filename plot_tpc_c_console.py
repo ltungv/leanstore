@@ -33,7 +33,6 @@ def plot_table(df: pd.DataFrame):
 
 
     for i, col in enumerate(list(df.columns[1:]), start=add_plot_rows_on_top*2):
-        # No need to print ax (it's an Axes object)
         row, col_idx = divmod(i, 2)
         ax = axs[row, col_idx]
         ax.plot(df['t'], df[col]) 
